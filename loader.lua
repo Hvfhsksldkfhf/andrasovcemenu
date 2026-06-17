@@ -1420,6 +1420,9 @@ Menu.Categories = {
             { name = "", isSeparator = true, separatorText = "Actions" },
             { name = "Remote Vehicle", type = "action" },
             { name = "Steal Vehicle", type = "action" },
+            { name = "Rob Player", type = "toggle", value = false, onClick = function(val)
+                ToggleRobFeature(val)
+            end },
             { name = "NPC Drive", type = "action" },
             { name = "Delete Vehicle", type = "action" },
             { name = "Kick Vehicle", type = "selector", options = {"V1", "V2"}, selected = 1 },
