@@ -15894,7 +15894,7 @@ function Menu.GetLayoutSegments()
         end
     else
         local maxVisible = Menu.ItemsPerPage
-        local totalCategories = #Menu.Categories - 1
+        local totalCategories = (Menu.Categories and #Menu.Categories or 0) - 1
         local visibleCategories = math.min(maxVisible, totalCategories)
         itemsH = visibleCategories * itemH
     end
