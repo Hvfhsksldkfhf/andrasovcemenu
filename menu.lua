@@ -1,7 +1,7 @@
 -- SUSANO MENU < mx > discord.gg/
 
 -- OPRAVENO: Odkaz nyní směřuje na skutečnou knihovnu (ui library), nikoliv sám na sebe
-local LibraryURL = "https://raw.githubusercontent.com/Hvfhsksldkfhf/andrasovcemenu/refs/heads/main/cheat.lua"
+local LibraryURL = "https://raw.githubusercontent.com/Hvfhsksldkfhf/andrasovcemenu/refs/heads/main/menu.lua"
 
 
 if not Susano or type(Susano) ~= "table" or type(Susano.HttpGet) ~= "function" then
