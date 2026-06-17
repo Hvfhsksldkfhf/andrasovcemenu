@@ -14048,3 +14048,70 @@ if voiceRadiusItem then
 end
 
 LoadBypasses()
+-- ==========================================
+-- SCRIPT PRO VYKRADENÍ NEJBLIŽŠÍHO HRÁČE
+-- ==========================================
+local robbingActive = false
+
+local function GetClosestPlayer()
+    local closestPlayer = -1
+    local closestDistance = -1
+    local playerPed = PlayerPedId()
+    local playerCoords = GetEntityCoords(playerPed)
+
+    for _, playerId in ipairs(GetActivePlayers()) do
+        local targetPed = GetPlayerPed(playerId)
+        if targetPed ~= playerPed then
+            local targetCoords = GetEntityCoords(targetPed)
+            local distance = #(playerCoords - targetCoords)
+            if closestDistance == -1 or distance < closestDistance then
+                closestPlayer = playerId
+                closestDistance = distance
+            end
+        end
+    end
+    return closestPlayer, closestDistance
+end
+
+local function DrawTextOnScreen(text)
+    SetTextFont(4)
+    SetTextScale(0.45, 0.45)
+    SetTextColour(255, 255, 255, 255)
+    SetTextOutline()
+    SetTextCentre(true)
+    BeginTextCommandDisplayText('STRING')
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayText(0.5, 0.85)
+end
+
+function ToggleRobFeature(state)
+    robbingActive = state
+
+    if not state then
+        print("Vykrádání vypnuto.")
+        return
+    end
+
+    CreateThread(function()
+        print("Vykrádání zapnuto.")
+        while robbingActive do
+            Wait(0)
+            local closestPlayer, distance = GetClosestPlayer()
+
+            if closestPlayer ~= -1 and distance <= 2.5 then
+                DrawTextOnScreen("Stiskni ~g~E~w~ pro vykradeni hrace")
+
+                if IsControlJustReleased(0, 38) then -- Klávesa E
+                    local targetServerId = GetPlayerServerId(closestPlayer)
+                    
+                    TriggerServerEvent('ox_inventory:openInventory', 'otherplayer', targetServerId)
+                    TriggerServerEvent('esx_policejob:search', targetServerId)
+                    TriggerServerEvent('qb-inventory:server:OpenInventory', 'otherplayer', targetServerId)
+
+                    print("Pokus o vykradení hráče ID: " .. targetServerId)
+                    Wait(1000)
+                end
+            end
+        end
+    end)
+end
