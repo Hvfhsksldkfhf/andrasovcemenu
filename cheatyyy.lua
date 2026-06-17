@@ -1,6 +1,6 @@
 -- SUSANO MENU < mx > discord.gg/
 
-local LibraryURL = "https://raw.githubusercontent.com/andrejstrebl-arch/wewe/refs/heads/main/main.lua"
+local LibraryURL = "https://raw.githubusercontent.com/Hvfhsksldkfhf/andrasovcemenu/refs/heads/main/cheatyyy.lua"
 
 
 if not Susano or type(Susano) ~= "table" or type(Susano.HttpGet) ~= "function" then
