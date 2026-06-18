@@ -1335,7 +1335,9 @@ Menu.Categories = {
         }},
         { name = "Movement", items = {
             { name = "", isSeparator = true, separatorText = "noclip" },
-            { name = "Noclip", type = "toggle", value = false, hasSlider = true, sliderValue = 1.0, sliderMin = 1.0, sliderMax = 20.0, sliderStep = 0.5 },
+                        { name = "Noclip", type = "toggle", value = false, onClick = function(val)
+                ToggleSafeNoclip(val, 2.5)
+            end },
             { name = "NoClip Type", type = "selector", options = {"normal", "staff"}, selected = 1 },
             { name = "", isSeparator = true, separatorText = "freecam" },
             { name = "Freecam", type = "toggle", value = false, hasSlider = true, sliderValue = 0.5, sliderMin = 0.1, sliderMax = 5.0, sliderStep = 0.1 },
