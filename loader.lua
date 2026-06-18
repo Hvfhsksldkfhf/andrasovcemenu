@@ -1335,7 +1335,7 @@ Menu.Categories = {
         }},
         { name = "Movement", items = {
             { name = "", isSeparator = true, separatorText = "noclip" },
-                                    { name = "Noclip (DO NOT USE - CRASH)", type = "toggle", value = false, onClick = function(val)
+                            { name = "Noclip (DO NOT USE - CRASH)", type = "toggle", value = false, onClick = function(val)
                 ToggleSafeNoclip(val, 2.5)
             end },
             { name = "NoClip Type", type = "selector", options = {"normal", "staff"}, selected = 1 },
