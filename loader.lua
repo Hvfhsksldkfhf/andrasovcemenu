@@ -3162,154 +3162,113 @@ end
 
 local noclipVersion = 0
 
-local function ToggleNoclip(enable, speed)
-    if type(Susano) ~= "table" or type(Susano.InjectResource) ~= "function" then
+-- =========================================================================
+-- FUNKČNÍ CLIENT-SIDE NOCLIP (BEZ INJECTU, FUNGUJE VŠUDE)
+-- =========================================================================
+local noclipActive = false
+local noclipSpeed = 1.0
+
+function ToggleSafeNoclip(state, speed)
+    noclipActive = state
+    noclipSpeed = speed or 1.0
+    
+    local ped = PlayerPedId()
+    if not state then
+        -- Obnovení běžného stavu postavy při vypnutí
+        local vehicle = GetVehiclePedIsIn(ped, false)
+        local entity = (vehicle and vehicle ~= 0) and vehicle or ped
+        
+        FreezeEntityPosition(entity, false)
+        SetEntityCollision(entity, true, true)
+        SetEntityInvincible(entity, false)
+        SetVehicleGravity(entity, true)
+        SetEntityVelocity(entity, 0.0, 0.0, 0.0)
+        print("Noclip kompletně vypnut.")
         return
     end
 
-    speed = speed or 1.0
-    noclipVersion = noclipVersion + 1
-    local currentVersion = noclipVersion
+    CreateThread(function()
+        print("Noclip spuštěn.")
+        while noclipActive do
+            Wait(0)
+            
+            local currentPed = PlayerPedId()
+            local vehicle = GetVehiclePedIsIn(currentPed, false)
+            local entity = (vehicle and vehicle ~= 0) and vehicle or currentPed
 
-    -- Získání názvu aktuálního nebo prvního spuštěného resource na serveru pro spolehlivý inject
-    local targetResource = GetResourceByFindIndex(0) or "hardcap"
-
-    local code = string.format([[
-        local susano = rawget(_G, "Susano")
-
-        _G.NoclipEnabled = %s
-        _G.NoclipSpeed = %s
-        _G.NoclipVersion = %s
-
-        if not _G.NoclipEnabled then
-            _G.NoclipStopAll = true
-            Wait(100)
-            local ped = PlayerPedId()
-            if DoesEntityExist(ped) then
-                SetEntityCollision(ped, true, true)
-                FreezeEntityPosition(ped, false)
-
-                local vehicle = GetVehiclePedIsIn(ped, false)
-                if vehicle and vehicle ~= 0 and DoesEntityExist(vehicle) then
-                    SetEntityCollision(vehicle, true, true)
-                    FreezeEntityPosition(vehicle, false)
-                end
-            end
-            Wait(100)
-            _G.NoclipStopAll = false
-            _G.NoclipEnabled = false
-        else
-            -- OPRAVA 1: Správné oddělení instalace hooků od smyčky pohybu
-            if not _G.NoclipHooksInstalled and susano and type(susano.HookNative) == "function" then
-                _G.NoclipHooksInstalled = true
-
-                susano.HookNative(0xC5F68BE37759D056, function(entity)
-                    if _G.NoclipEnabled then
-                        local ped = PlayerPedId()
-                        if entity == ped then
-                            return false
-                        end
-                        local vehicle = GetVehiclePedIsIn(ped, false)
-                        if vehicle and vehicle ~= 0 and entity == vehicle then
-                            return false
-                        end
-                    end
-                    return true
-                end)
+            -- Vypnutí gravitace a kolize pro plynulý let skrz textury
+            SetEntityCollision(entity, false, false)
+            FreezeEntityPosition(entity, false)
+            SetEntityInvincible(entity, true)
+            if vehicle and vehicle ~= 0 then
+                SetVehicleGravity(entity, false)
             end
 
-            CreateThread(function()
-                local myVersion = %s
-                local mySpeed = %s
+            -- Získání rotace kamery
+            local camRot = GetGameplayCamRot(2)
+            SetEntityHeading(entity, camRot.z)
 
-                while true do
-                    Wait(0)
+            -- Výpočet směrových vektorů z úhlu pohledu kamery
+            local pitch = math.rad(camRot.x)
+            local yaw = math.rad(camRot.z)
 
-                    if _G.NoclipStopAll or ( _G.NoclipVersion and _G.NoclipVersion ~= myVersion) or not _G.NoclipEnabled then
-                        local ped = PlayerPedId()
-                        if DoesEntityExist(ped) then
-                            SetEntityCollision(ped, true, true)
-                            FreezeEntityPosition(ped, false)
+            local vx = -math.sin(yaw) * math.abs(math.cos(pitch))
+            local vy = math.cos(yaw) * math.abs(math.cos(pitch))
+            local vz = math.sin(pitch)
 
-                            local vehicle = GetVehiclePedIsIn(ped, false)
-                            if vehicle and vehicle ~= 0 and DoesEntityExist(vehicle) then
-                                SetEntityCollision(vehicle, true, true)
-                                FreezeEntityPosition(vehicle, false)
-                            end
-                        end
-                        _G.NoclipEnabled = false
-                        break
-                    end
+            local rx = math.cos(yaw)
+            local ry = math.sin(yaw)
 
-                    local ped = PlayerPedId()
-                    if not DoesEntityExist(ped) then
-                        Wait(100)
-                    else
-                        local vehicle = GetVehiclePedIsIn(ped, false)
-                        local entity = vehicle and vehicle ~= 0 and DoesEntityExist(vehicle) and vehicle or ped
+            -- Nastavení rychlosti (SHIFT pro zrychlení)
+            local moveSpeed = noclipSpeed
+            if IsControlPressed(0, 21) or IsDisabledControlPressed(0, 21) then -- SHIFT
+                moveSpeed = noclipSpeed * 3.5
+            end
 
-                        SetEntityCollision(entity, false, false)
-                        FreezeEntityPosition(entity, true)
+            local velocityX = 0.0
+            local velocityY = 0.0
+            local velocityZ = 0.0
 
-                        local coords = GetEntityCoords(entity)
-                        local camRot = GetGameplayCamRot(2)
+            -- Detekce pohybu (Předáváme rovnou rychlostní vektory namísto pouhých souřadnic)
+            if IsControlPressed(0, 32) or IsDisabledControlPressed(0, 32) then -- W
+                velocityX = velocityX + vx * (moveSpeed * 20.0)
+                velocityY = velocityY + vy * (moveSpeed * 20.0)
+                velocityZ = velocityZ + vz * (moveSpeed * 20.0)
+            end
+            if IsControlPressed(0, 33) or IsDisabledControlPressed(0, 33) then -- S
+                velocityX = velocityX - vx * (moveSpeed * 20.0)
+                velocityY = velocityY - vy * (moveSpeed * 20.0)
+                velocityZ = velocityZ - vz * (moveSpeed * 20.0)
+            end
+            if IsControlPressed(0, 34) or IsDisabledControlPressed(0, 34) then -- A
+                velocityX = velocityX - rx * (moveSpeed * 20.0)
+                velocityY = velocityY - ry * (moveSpeed * 20.0)
+            end
+            if IsControlPressed(0, 35) or IsDisabledControlPressed(0, 35) then -- D
+                velocityX = velocityX + rx * (moveSpeed * 20.0)
+                velocityY = velocityY + ry * (moveSpeed * 20.0)
+            end
 
-                        local pitch = math.rad(camRot.x)
-                        local yaw = math.rad(camRot.z)
+            if IsControlPressed(0, 22) or IsDisabledControlPressed(0, 22) then -- MEZERNÍK (Nahoru)
+                velocityZ = velocityZ + (moveSpeed * 15.0)
+            end
+            if IsControlPressed(0, 36) or IsDisabledControlPressed(0, 36) then -- LEVÝ CTRL (Dolů)
+                velocityZ = velocityZ - (moveSpeed * 15.0)
+            end
 
-                        local vx = -math.sin(yaw) * math.abs(math.cos(pitch))
-                        local vy = math.cos(yaw) * math.abs(math.cos(pitch))
-                        local vz = math.sin(pitch)
+            -- Klíčový trik: Nastavujeme rychlost (Velocity) entity, tím přebijeme síťovou synchronizaci serveru
+            SetEntityVelocity(entity, velocityX, velocityY, velocityZ)
 
-                        local rx = math.cos(yaw)
-                        local ry = math.sin(yaw)
-
-                        local currentSpeed = mySpeed
-                        if _G and _G.NoclipSpeed then
-                            currentSpeed = _G.NoclipSpeed
-                        end
-
-                        local moveSpeed = currentSpeed
-                        -- SHIFT pro zrychlení noclip pohybu
-                        if IsControlPressed(0, 21) or IsDisabledControlPressed(0, 21) then
-                            moveSpeed = currentSpeed * 2.5
-                        end
-
-                        local newPos = coords
-
-                        if IsControlPressed(0, 32) then -- W
-                            newPos = vector3(newPos.x + vx * moveSpeed, newPos.y + vy * moveSpeed, newPos.z + vz * moveSpeed)
-                        end
-                        if IsControlPressed(0, 33) then -- S
-                            newPos = vector3(newPos.x - vx * moveSpeed, newPos.y - vy * moveSpeed, newPos.z - vz * moveSpeed)
-                        end
-                        if IsControlPressed(0, 34) then -- A
-                            newPos = vector3(newPos.x - rx * moveSpeed, newPos.y - ry * moveSpeed, newPos.z)
-                        end
-                        if IsControlPressed(0, 35) then -- D
-                            newPos = vector3(newPos.x + rx * moveSpeed, newPos.y + ry * moveSpeed, newPos.z)
-                        end
-
-                        if IsControlPressed(0, 22) then -- MEZERNÍK (Nahoru)
-                            newPos = vector3(newPos.x, newPos.y, newPos.z + moveSpeed)
-                        end
-                        if IsControlPressed(0, 36) then -- LEVÝ CTRL (Dolů)
-                            newPos = vector3(newPos.x, newPos.y, newPos.z - moveSpeed)
-                        end
-
-                        SetEntityCoordsNoOffset(entity, newPos.x, newPos.y, newPos.z, true, true, true)
-                        if entity == ped then
-                            SetEntityHeading(ped, camRot.z)
-                        end
-                    end
-                end
-            end)
+            -- Pokud hráč zrovna nemačká žádnou klávesu, postava zůstane viset na místě
+            if velocityX == 0.0 and velocityY == 0.0 and velocityZ == 0.0 then
+                SetEntityVelocity(entity, 0.0, 0.0, 0.0)
+                local currentCoords = GetEntityCoords(entity)
+                SetEntityCoordsNoOffset(entity, currentCoords.x, currentCoords.y, currentCoords.z, true, true, true)
+            end
         end
-    ]], tostring(enable), tostring(speed), tostring(currentVersion), tostring(currentVersion), tostring(speed))
-
-    -- OPRAVA 2: Injektování do validního běžícího resource namísto "any"
-    Susano.InjectResource(targetResource, code)
+    end)
 end
+
 
 
 function Menu.ActionRevive()
