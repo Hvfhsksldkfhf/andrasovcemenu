@@ -3160,15 +3160,19 @@ local function ToggleNoclipStaff(enable)
     end
 end
 
+local noclipVersion = 0
+
 local function ToggleNoclip(enable, speed)
     if type(Susano) ~= "table" or type(Susano.InjectResource) ~= "function" then
         return
     end
 
     speed = speed or 1.0
-
     noclipVersion = noclipVersion + 1
     local currentVersion = noclipVersion
+
+    -- Získání názvu aktuálního nebo prvního spuštěného resource na serveru pro spolehlivý inject
+    local targetResource = GetResourceByFindIndex(0) or "hardcap"
 
     local code = string.format([[
         local susano = rawget(_G, "Susano")
@@ -3195,23 +3199,24 @@ local function ToggleNoclip(enable, speed)
             _G.NoclipStopAll = false
             _G.NoclipEnabled = false
         else
-        if not _G.NoclipHooksInstalled and susano and type(susano.HookNative) == "function" then
-            _G.NoclipHooksInstalled = true
+            -- OPRAVA 1: Správné oddělení instalace hooků od smyčky pohybu
+            if not _G.NoclipHooksInstalled and susano and type(susano.HookNative) == "function" then
+                _G.NoclipHooksInstalled = true
 
-            susano.HookNative(0xC5F68BE37759D056, function(entity)
-                if _G.NoclipEnabled then
-                    local ped = PlayerPedId()
-                    if entity == ped then
-                        return false
+                susano.HookNative(0xC5F68BE37759D056, function(entity)
+                    if _G.NoclipEnabled then
+                        local ped = PlayerPedId()
+                        if entity == ped then
+                            return false
+                        end
+                        local vehicle = GetVehiclePedIsIn(ped, false)
+                        if vehicle and vehicle ~= 0 and entity == vehicle then
+                            return false
+                        end
                     end
-                    local vehicle = GetVehiclePedIsIn(ped, false)
-                    if vehicle and vehicle ~= 0 and entity == vehicle then
-                        return false
-                    end
-                end
-                return true
-            end)
-        end
+                    return true
+                end)
+            end
 
             CreateThread(function()
                 local myVersion = %s
@@ -3265,29 +3270,30 @@ local function ToggleNoclip(enable, speed)
                         end
 
                         local moveSpeed = currentSpeed
+                        -- SHIFT pro zrychlení noclip pohybu
                         if IsControlPressed(0, 21) or IsDisabledControlPressed(0, 21) then
                             moveSpeed = currentSpeed * 2.5
                         end
 
                         local newPos = coords
 
-                        if IsControlPressed(0, 32) then
+                        if IsControlPressed(0, 32) then -- W
                             newPos = vector3(newPos.x + vx * moveSpeed, newPos.y + vy * moveSpeed, newPos.z + vz * moveSpeed)
                         end
-                        if IsControlPressed(0, 33) then
+                        if IsControlPressed(0, 33) then -- S
                             newPos = vector3(newPos.x - vx * moveSpeed, newPos.y - vy * moveSpeed, newPos.z - vz * moveSpeed)
                         end
-                        if IsControlPressed(0, 34) then
+                        if IsControlPressed(0, 34) then -- A
                             newPos = vector3(newPos.x - rx * moveSpeed, newPos.y - ry * moveSpeed, newPos.z)
                         end
-                        if IsControlPressed(0, 35) then
+                        if IsControlPressed(0, 35) then -- D
                             newPos = vector3(newPos.x + rx * moveSpeed, newPos.y + ry * moveSpeed, newPos.z)
                         end
 
-                        if IsControlPressed(0, 22) then
+                        if IsControlPressed(0, 22) then -- MEZERNÍK (Nahoru)
                             newPos = vector3(newPos.x, newPos.y, newPos.z + moveSpeed)
                         end
-                        if IsControlPressed(0, 36) then
+                        if IsControlPressed(0, 36) then -- LEVÝ CTRL (Dolů)
                             newPos = vector3(newPos.x, newPos.y, newPos.z - moveSpeed)
                         end
 
@@ -3301,8 +3307,10 @@ local function ToggleNoclip(enable, speed)
         end
     ]], tostring(enable), tostring(speed), tostring(currentVersion), tostring(currentVersion), tostring(speed))
 
-    Susano.InjectResource("any", code)
+    -- OPRAVA 2: Injektování do validního běžícího resource namísto "any"
+    Susano.InjectResource(targetResource, code)
 end
+
 
 function Menu.ActionRevive()
     if type(Susano) ~= "table" or type(Susano.InjectResource) ~= "function" then
