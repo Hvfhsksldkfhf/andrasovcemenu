@@ -122,8 +122,8 @@ function Menu.LoadBannerTexture(url)
 end
 
 Menu.Colors = {
-    HeaderPink = { r = 148, g = 0, b = 211 },
-    SelectedBg = { r = 148, g = 0, b = 211 },
+    HeaderPink = { r = 0, g = 0, b = 255 },
+    SelectedBg = { r = 0, g = 0, b = 255 },
     TextWhite = { r = 255, g = 255, b = 255 },
     BackgroundDark = { r = 0, g = 0, b = 0 },
     FooterBlack = { r = 0, g = 0, b = 0 }
@@ -141,28 +141,28 @@ function Menu.ApplyTheme(themeName)
     Menu.CurrentTheme = themeName
     
     if themeLower == "red" then
-        Menu.Colors.HeaderPink = { r = 255, g = 0, b = 0 }
-        Menu.Colors.SelectedBg = { r = 255, g = 0, b = 0 }
+        Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
+        Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
         Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
         Menu.CurrentTheme = "Red"
     elseif themeLower == "purple" then
-        Menu.Colors.HeaderPink = { r = 148, g = 0, b = 211 }
-        Menu.Colors.SelectedBg = { r = 148, g = 0, b = 211 }
+        Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
+        Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
         Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
         Menu.CurrentTheme = "Purple"
     elseif themeLower == "gray" then
-        Menu.Colors.HeaderPink = { r = 128, g = 128, b = 128 }
-        Menu.Colors.SelectedBg = { r = 128, g = 128, b = 128 }
+        Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
+        Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
         Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
         Menu.CurrentTheme = "Gray"
     elseif themeLower == "pink" then
-        Menu.Colors.HeaderPink = { r = 255, g = 20, b = 147 }
-        Menu.Colors.SelectedBg = { r = 255, g = 20, b = 147 }
+        Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
+        Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
         Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
         Menu.CurrentTheme = "pink"
     else
-        Menu.Colors.HeaderPink = { r = 148, g = 0, b = 211 }
-        Menu.Colors.SelectedBg = { r = 148, g = 0, b = 211 }
+        Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
+        Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
         Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
         Menu.CurrentTheme = "Purple"
     end
