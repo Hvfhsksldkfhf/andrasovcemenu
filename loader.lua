@@ -3165,40 +3165,26 @@ end
 local noclipVersion = 0
 
 -- =========================================================================
--- OPRAVENÝ FUNKČNÍ CLIENT-SIDE NOCLIP (BEZ CHYBY SYNTAXE)
+-- EXTERNÍ ASYNCHRONNÍ NOCLIP SYSTEM (NIKDY NEZASEKNE MENU)
 -- =========================================================================
-local noclipActive = false
-local noclipSpeed = 2.5
+local safeNoclipState = false
+local safeNoclipSpeed = 2.5
 
+-- Tuto funkci volá tlačítko v menu. Pouze mění stav, nic nespouští!
 function ToggleSafeNoclip(state, speed)
-    noclipActive = state
-    noclipSpeed = speed or 2.5
-    
-    if not state then
-        -- Vypnutí: Obnovení fyziky se spouští bezpečně v novém vlákně
-        CreateThread(function()
-            local pPed = PlayerPedId()
-            if DoesEntityExist(pPed) then
-                local pVeh = GetVehiclePedIsIn(pPed, false)
-                local entity = (pVeh and pVeh ~= 0) and pVeh or pPed
-                
-                FreezeEntityPosition(entity, false)
-                SetEntityCollision(entity, true, true)
-                SetEntityInvincible(entity, false)
-                SetEntityVelocity(entity, 0.0, 0.0, 0.0)
-                if pVeh and pVeh ~= 0 then
-                    SetVehicleGravity(pVeh, true)
-                end
-            end
-        end)
-        print("Noclip byl úspěšně vypnut.")
-        return
-    end
+    safeNoclipState = state
+    safeNoclipSpeed = speed or 2.5
+    print("Noclip prepnut na: " .. tostring(state))
+end
 
-    -- Zapnutí: Smyčka pro pohyb postavy vzduchem
-    CreateThread(function()
-        print("Noclip byl úspěšně zapnut.")
-        while noclipActive do
+-- Samostatné nezávislé vlákno, které běží na pozadí od samého začátku injectu
+CreateThread(function()
+    while true do
+        -- Pokud noclip není zapnutý v menu, vlákno spí a nezatěžuje hru
+        if not safeNoclipState then
+            Wait(250) 
+        else
+            -- Pokud je noclip zapnutý, provádí se samotný let každou milisekundu
             Wait(0)
             
             local currentPed = PlayerPedId()
@@ -3206,7 +3192,7 @@ function ToggleSafeNoclip(state, speed)
                 local vehicle = GetVehiclePedIsIn(currentPed, false)
                 local entity = (vehicle and vehicle ~= 0) and vehicle or currentPed
 
-                -- Deaktivace kolizí a gravitace
+                -- Vypnutí kolizí a gravitace
                 SetEntityCollision(entity, false, false)
                 FreezeEntityPosition(entity, false)
                 SetEntityInvincible(entity, true)
@@ -3214,7 +3200,7 @@ function ToggleSafeNoclip(state, speed)
                     SetVehicleGravity(vehicle, false)
                 end
 
-                -- Synchronizace směru podle pohledu kamery
+                -- Směr podle kamery
                 local camRot = GetGameplayCamRot(2)
                 SetEntityHeading(entity, camRot.z)
 
@@ -3228,17 +3214,17 @@ function ToggleSafeNoclip(state, speed)
                 local rx = math.cos(yaw)
                 local ry = math.sin(yaw)
 
-                -- Kontrola zrychlení přes SHIFT
-                local moveSpeed = noclipSpeed
+                -- Rychlost (SHIFT pro turbo)
+                local moveSpeed = safeNoclipSpeed
                 if IsControlPressed(0, 21) or IsDisabledControlPressed(0, 21) then
-                    moveSpeed = noclipSpeed * 3.5
+                    moveSpeed = safeNoclipSpeed * 3.5
                 end
 
                 local velocityX = 0.0
                 local velocityY = 0.0
                 local velocityZ = 0.0
 
-                -- Směrové klávesy (W, S, A, D)
+                -- Pohyb klávesami (W, S, A, D)
                 if IsControlPressed(0, 32) or IsDisabledControlPressed(0, 32) then
                     velocityX = velocityX + vx * (moveSpeed * 20.0)
                     velocityY = velocityY + vy * (moveSpeed * 20.0)
@@ -3258,7 +3244,7 @@ function ToggleSafeNoclip(state, speed)
                     velocityY = velocityY + ry * (moveSpeed * 20.0)
                 end
 
-                -- Vertikální pohyb (Mezerník = Nahoru, Levý CTRL = Dolů)
+                -- Výška (Mezerník / CTRL)
                 if IsControlPressed(0, 22) or IsDisabledControlPressed(0, 22) then
                     velocityZ = velocityZ + (moveSpeed * 15.0)
                 end
@@ -3266,10 +3252,10 @@ function ToggleSafeNoclip(state, speed)
                     velocityZ = velocityZ - (moveSpeed * 15.0)
                 end
 
-                -- Aplikace rychlosti na entitu
+                -- Aplikace rychlosti
                 SetEntityVelocity(entity, velocityX, velocityY, velocityZ)
 
-                -- Fixace pozice při zastavení (Zamezení padání)
+                -- Zastavení na místě
                 if velocityX == 0.0 and velocityY == 0.0 and velocityZ == 0.0 then
                     SetEntityVelocity(entity, 0.0, 0.0, 0.0)
                     local currentCoords = GetEntityCoords(entity)
@@ -3277,8 +3263,34 @@ function ToggleSafeNoclip(state, speed)
                 end
             end
         end
-    end)
-end
+    end
+end)
+
+-- Samostatné jednorázové vlákno, které po vypnutí noclipu bezpečně vrátí postavu do normálu
+CreateThread(function()
+    local lastState = false
+    while true do
+        Wait(500)
+        if lastState == true and safeNoclipState == false then
+            -- Noclip byl právě vypnut v menu -> resetujeme entitu
+            local pPed = PlayerPedId()
+            if DoesEntityExist(pPed) then
+                local pVeh = GetVehiclePedIsIn(pPed, false)
+                local entity = (pVeh and pVeh ~= 0) and pVeh or pPed
+                
+                FreezeEntityPosition(entity, false)
+                SetEntityCollision(entity, true, true)
+                SetEntityInvincible(entity, false)
+                SetEntityVelocity(entity, 0.0, 0.0, 0.0)
+                if pVeh and pVeh ~= 0 then
+                    SetVehicleGravity(pVeh, true)
+                end
+            end
+        end
+        lastState = safeNoclipState
+    end
+end)
+
 
 function Menu.ActionRevive()
     if type(Susano) ~= "table" or type(Susano.InjectResource) ~= "function" then
