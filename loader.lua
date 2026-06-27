@@ -8247,24 +8247,33 @@ end)
                         end
                     end
 
-                    Actions.givePistolItem = FindItem("Combat", "General", "Give Combat Pistol")
-                    if Actions.givePistolItem then
-                        Actions.givePistolItem.onClick = function()
-                            if type(Susano) == "table" and type(Susano.InjectResource) == "function" then
+Actions.givePistolItem = FindItem("Combat", "General", "Give Combat Pistol")
+if Actions.givePistolItem then
+    Actions.givePistolItem.onClick = function()
+        if type(Susano) == "table" and type(Susano.InjectResource) == "function" then
             Susano.InjectResource("any", [[
-                local ped = PlayerPedId()
-                if not ped or not DoesEntityExist(ped) then return end
+                -- Bezpečné spuštění v samostatném FiveM vlákně, aby hra nespadla
+                Citizen.CreateThread(function()
+                    local ped = PlayerPedId()
+                    if not ped or not DoesEntityExist(ped) then return end
 
-                -- Hash zbraně pro Combat Pistol
-                local weaponHash = GetHashKey("WEAPON_COMBATPISTOL")
-                local ammoCount = 250
+                    local weaponHash = GetHashKey("WEAPON_COMBATPISTOL")
+                    local ammoCount = 250
 
-                -- Dáme zbraň hráči, nastavíme náboje a rovnou mu ji vložíme do ruky (true)
-                GiveWeaponToPed(ped, weaponHash, ammoCount, false, true)
+                    -- Vyžádání modelu zbraně do paměti (prevence crashů)
+                    RequestWeaponAsset(weaponHash, 31, 0)
+                    while not HasWeaponAssetLoaded(weaponHash) do
+                        Citizen.Wait(0)
+                    end
+
+                    -- Bezpečné předání zbraně
+                    GiveWeaponToPed(ped, weaponHash, ammoCount, false, true)
+                end)
             ]])
         end
     end
 end
+
 
           
                     Actions.giveSuppressorItem = FindItem("Combat", "General", "Give suppressor")
