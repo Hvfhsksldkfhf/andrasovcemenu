@@ -71,7 +71,7 @@ end
 
 Menu.Banner = {
     enabled = true,
-    imageUrl = "https://i.imgur.com/vikk9KA.png",
+    imageUrl = "https://i.imgur.com/4bbEZVN.png",
     height = 100
 }
 
@@ -143,27 +143,27 @@ function Menu.ApplyTheme(themeName)
     if themeLower == "red" then
         Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
         Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
-        Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
+        Menu.Banner.imageUrl = "https://i.imgur.com/4bbEZVN.png"
         Menu.CurrentTheme = "Red"
     elseif themeLower == "purple" then
         Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
         Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
-        Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
+        Menu.Banner.imageUrl = "https://i.imgur.com/4bbEZVN.png"
         Menu.CurrentTheme = "Purple"
     elseif themeLower == "gray" then
         Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
         Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
-        Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
+        Menu.Banner.imageUrl = "https://i.imgur.com/4bbEZVN.png"
         Menu.CurrentTheme = "Gray"
     elseif themeLower == "pink" then
         Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
         Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
-        Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
+        Menu.Banner.imageUrl = "https://i.imgur.com/4bbEZVN.png"
         Menu.CurrentTheme = "pink"
     else
         Menu.Colors.HeaderPink = { r = 0, g = 0, b = 255 }
         Menu.Colors.SelectedBg = { r = 0, g = 0, b = 255 }
-        Menu.Banner.imageUrl = "https://i.imgur.com/vikk9KA.png"
+        Menu.Banner.imageUrl = "https://i.imgur.com/4bbEZVN.png"
         Menu.CurrentTheme = "Purple"
     end
 
