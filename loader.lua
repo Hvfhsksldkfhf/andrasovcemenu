@@ -1,4 +1,4 @@
--- SUSANO MENU < andr > discord.gg/andrasovci
+-- SUSANO MENU < titanmenu > dsc.gg/titanmenu
 
 local LibraryURL = "https://raw.githubusercontent.com/Hvfhsksldkfhf/andrasovcemenu/refs/heads/main/menu.lua"
 
