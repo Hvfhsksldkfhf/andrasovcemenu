@@ -1549,7 +1549,7 @@ function Menu.DrawFooter()
     local scaledFooterSize = footerSize * scale
     local footerTextY = footerY + (footerHeight / 2) - (scaledFooterSize / 2) + (1 * scale)
 
-    local footerText = " https://discord.gg/andrasovci "
+    local footerText = " https://dsc.gg/titanmenu "
     local currentX = x + footerPadding
 
     local textWidth = 0
